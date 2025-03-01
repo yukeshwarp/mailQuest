@@ -4,3 +4,4 @@ openai
 html2text
 scikit-learn
 azure-identity
+msal
