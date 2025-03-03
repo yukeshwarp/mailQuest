@@ -57,9 +57,12 @@ if prompt := st.chat_input("Ask a question about your emails"):
             f"Subject: {mail.get('subject', 'No Subject')}\n"
             f"From: {mail.get('from', {}).get('emailAddress', {}).get('address', 'Unknown Sender')}\n"
             f"Received: {mail.get('receivedDateTime', 'Unknown Time')}\n"
+            f"Importance: {mail.get('importance', 'Normal')}\n"
+            f"Read: {'Yes' if mail.get('isRead', False) else 'No'}\n"
             f"Body: {h.handle(mail.get('body', {}).get('content', 'No Content'))}"
             for mail in relevant_mails[:25]
         ])
+
 
         with st.spinner("Thinking..."):
             response_stream = client.chat.completions.create(

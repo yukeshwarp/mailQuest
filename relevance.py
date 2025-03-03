@@ -9,6 +9,7 @@ def get_relevant_mails(mails, query):
                 From: {mail.get('from', {}).get('emailAddress', {}).get('address', 'Unknown Sender')}
                 Received: {mail.get('receivedDateTime', 'Unknown Time')}
                 Importance: {mail.get('importance', 'Normal')}
+                Read: {'Yes' if mail.get('isRead', False) else 'No'}
                 Has Attachment: {mail.get('hasAttachments', False)}
                 Categories: {', '.join(mail.get('categories', [])) if mail.get('categories') else 'None'}
                 Conversation ID: {mail.get('conversationId', 'N/A')}
