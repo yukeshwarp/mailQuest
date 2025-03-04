@@ -1,3 +1,5 @@
+import time
+import random
 import concurrent.futures
 from config import *
 
@@ -27,17 +29,35 @@ def get_relevant_mails(mails, query):
                     Return "yes" or "no" with no additional words strictly.
                     """
 
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "You are an intelligent email sorting assistant."},
-                {"role": "user", "content": prompt},
-            ],
-            temperature=0.3,
-        )
+        # Retry logic with backoff and jitter
+        max_retries = 5
+        retries = 0
 
-        if response.choices[0].message.content.strip().lower() == "yes":
-            return mail.get("id")
+        while retries < max_retries:
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[{"role": "system", "content": "You are an intelligent email sorting assistant."},
+                              {"role": "user", "content": prompt}],
+                    temperature=0.3,
+                )
+                
+                # Check if the response is valid
+                if response.choices[0].message.content.strip().lower() == "yes":
+                    return mail.get("id")
+                return None
+
+            except openai.error.RateLimitError:  # Handle rate-limiting error specifically
+                retries += 1
+                backoff_time = (2 ** retries) + random.uniform(0, 1)  # Exponential backoff with jitter
+                print(f"Rate limit hit, retrying in {backoff_time:.2f} seconds...")
+                time.sleep(backoff_time)
+            except Exception as e:
+                print(f"Error processing mail: {e}")
+                return None
+
+        # If all retries fail, return None
+        print("Max retries reached. Skipping this mail.")
         return None
 
     # Use ThreadPoolExecutor to process the mails concurrently
