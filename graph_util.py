@@ -28,8 +28,8 @@ def get_access_token():
 
 def fetch_emails(access_token, user_email):
     """Fetch all emails from Outlook with metadata."""
-    batch_size = 1000
-    url = f"https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$top={batch_size}"
+    batch_size = 500
+    url = f"https://graph.microsoft.com/v1.0/users/{user_email}/messages?$top={batch_size}"
     headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
     
     all_mails = []
