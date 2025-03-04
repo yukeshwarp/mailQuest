@@ -6,9 +6,13 @@ from config import *
 def get_relevant_mails(mails, query):
     relevant_mail_ids = []
 
-    # Function to process each individual mail and interact with the API
-    def process_mail(mail):
-        detail = f"""
+    # Function to process a batch of mails
+    def process_batch(batch):
+        # Prepare mail details for the batch
+        mail_details = ""
+        for idx, mail in enumerate(batch):
+            mail_detail = f"""
+                    Mail {idx+1}:
                     Subject: {mail.get('subject', 'No Subject')}
                     From: {mail.get('from', {}).get('emailAddress', {}).get('address', 'Unknown Sender')}
                     Received: {mail.get('receivedDateTime', 'Unknown Time')}
@@ -20,15 +24,16 @@ def get_relevant_mails(mails, query):
                     Weblink: {mail.get('webLink', 'No Link')}
                     Body Preview: {mail.get('bodyPreview', 'No Preview')}
                 """
-
-        prompt = f"""You are given with the details of a mail and user query. If the mail is relevant to respond to user query return "yes", if not return "no".
-                    Mail details: {detail}
+            mail_details += mail_detail + "\n\n"
+        
+        prompt = f"""You are given with details of multiple mails and a user query. If any mail is relevant to respond to the user query, return "yes" for that mail's position in the batch (1 to 10), otherwise "no".
+                    Mails details: {mail_details}
                     
                     User query: {query}
                     ---
-                    Return "yes" or "no" with no additional words strictly.
+                    Return a list of results (e.g., [1, 3, 5] for mails 1, 3, and 5 being relevant).
                     """
-
+        
         # Retry logic with backoff and jitter
         max_retries = 5
         retries = 0
@@ -42,30 +47,36 @@ def get_relevant_mails(mails, query):
                     temperature=0.3,
                 )
                 
-                # Check if the response is valid
-                if response.choices[0].message.content.strip().lower() == "yes":
-                    return mail.get("id")
-                return None
-
+                # Parse response and extract relevant mail positions
+                relevant_positions = response.choices[0].message.content.strip()
+                relevant_positions = [int(pos) - 1 for pos in relevant_positions.strip('[]').split(',') if pos.strip().isdigit()]
+                
+                # Extract the relevant mail IDs based on the positions
+                return [batch[pos].get("id") for pos in relevant_positions]
+            
             except openai.error.RateLimitError:  # Handle rate-limiting error specifically
                 retries += 1
                 backoff_time = (2 ** retries) + random.uniform(0, 1)  # Exponential backoff with jitter
                 print(f"Rate limit hit, retrying in {backoff_time:.2f} seconds...")
                 time.sleep(backoff_time)
             except Exception as e:
-                print(f"Error processing mail: {e}")
-                return None
+                print(f"Error processing batch: {e}")
+                return []
 
-        # If all retries fail, return None
-        print("Max retries reached. Skipping this mail.")
-        return None
+        # If all retries fail, return an empty list
+        print("Max retries reached. Skipping this batch.")
+        return []
 
-    # Use ThreadPoolExecutor to process the mails concurrently
+    # Batch the mails into groups of 10
+    batches = [mails[i:i + 10] for i in range(0, len(mails), 10)]
+
+    # Use ThreadPoolExecutor to process the batches concurrently
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        # Map the mails to the process_mail function concurrently
-        results = executor.map(process_mail, mails)
+        # Map the batches to the process_batch function concurrently
+        results = executor.map(process_batch, batches)
 
-    # Collect relevant mail IDs
-    relevant_mail_ids = [result for result in results if result is not None]
+    # Collect relevant mail IDs from all batches
+    for batch_result in results:
+        relevant_mail_ids.extend(batch_result)
 
     return relevant_mail_ids
