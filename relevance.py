@@ -8,16 +8,16 @@ def get_relevant_mails(mails, query):
     def process_mail(mail):
         detail = f"""
                     Subject: {mail.get('subject', 'No Subject')}
+                    From: {mail.get('from', {}).get('emailAddress', {}).get('address', 'Unknown Sender')}
+                    Received: {mail.get('receivedDateTime', 'Unknown Time')}
+                    Importance: {mail.get('importance', 'Normal')}
+                    Read: {'Yes' if mail.get('isRead', False) else 'No'}
+                    Has Attachment: {mail.get('hasAttachments', False)}
+                    Categories: {', '.join(mail.get('categories', [])) if mail.get('categories') else 'None'}
+                    Conversation ID: {mail.get('conversationId', 'N/A')}
+                    Weblink: {mail.get('webLink', 'No Link')}
                     Body Preview: {mail.get('bodyPreview', 'No Preview')}
                 """
-        # From: {mail.get('from', {}).get('emailAddress', {}).get('address', 'Unknown Sender')}
-        # Received: {mail.get('receivedDateTime', 'Unknown Time')}
-        # Importance: {mail.get('importance', 'Normal')}
-        # Read: {'Yes' if mail.get('isRead', False) else 'No'}
-        # Has Attachment: {mail.get('hasAttachments', False)}
-        # Categories: {', '.join(mail.get('categories', [])) if mail.get('categories') else 'None'}
-        # Conversation ID: {mail.get('conversationId', 'N/A')}
-        # Weblink: {mail.get('webLink', 'No Link')}
 
         prompt = f"""You are given with the details of a mail and user query. If the mail is relevant to respond to user query return "yes", if not return "no".
                     Mail details: {detail}
