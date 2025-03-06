@@ -12,13 +12,13 @@ st.sidebar.title("Email Input")
 user_email = st.sidebar.text_input("Enter User Email")
 
 # Add a date picker for the user to select a start date
-start_date = st.sidebar.date_input("Select a Start Date", min_value=datetime(2000, 1, 1), max_value=datetime.today())
+start_date = st.sidebar.date_input("Select a Start Date", min_value=datetime(2000, 1, 1).date(), max_value=datetime.today().date())
 
 # Calculate 3 months from the start date
 three_months_from_start = start_date + timedelta(days=90)
 
 # If three_months_from_start is less than today, set max_value to today
-max_date = min(three_months_from_start, datetime.today())
+max_date = min(three_months_from_start, datetime.today().date())
 
 # Display the date range
 st.sidebar.write("Mails on focus")
