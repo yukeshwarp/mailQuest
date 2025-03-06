@@ -1,4 +1,5 @@
 import streamlit as st
+from config import *
 from datetime import datetime, timedelta
 from graph_util import fetch_emails, get_access_token
 from relevance import get_relevant_mails
