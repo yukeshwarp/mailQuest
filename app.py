@@ -1,9 +1,9 @@
 import streamlit as st
-from config import *
+from config import client
 from datetime import datetime, timedelta
 from graph_util import fetch_emails, get_access_token
 from relevance import get_relevant_mails
-from preprocessor import *
+from preprocessor import preprocess_mail_details
 import html2text
 
 # Streamlit UI
