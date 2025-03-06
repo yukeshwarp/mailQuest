@@ -52,16 +52,17 @@ if prompt := st.chat_input("Ask a question about your emails"):
         h = html2text.HTML2Text()
         h.ignore_links = True
 
-        mail_details = "\n".join([ 
-            f"Subject: {mail.get('subject', 'No Subject')}\n"
-            f"From: {mail.get('from', {}).get('emailAddress', {}).get('address', 'Unknown Sender')}\n"
-            f"Received: {mail.get('receivedDateTime', 'Unknown Time')}\n"
-            f"Importance: {mail.get('importance', 'Normal')}\n"
-            f"Read: {'Yes' if mail.get('isRead', False) else 'No'}\n"
-            f"Body: {h.handle(mail.get('body', {}).get('content', 'No Content'))}"
-            for mail in relevant_mails[:25]
-        ])
-        preprocessed_mail_details = preprocess_mail_details(mail_details)
+        # mail_details = "\n".join([ 
+        #     f"Subject: {mail.get('subject', 'No Subject')}\n"
+        #     f"From: {mail.get('from', {}).get('emailAddress', {}).get('address', 'Unknown Sender')}\n"
+        #     f"Received: {mail.get('receivedDateTime', 'Unknown Time')}\n"
+        #     f"Importance: {mail.get('importance', 'Normal')}\n"
+        #     f"Read: {'Yes' if mail.get('isRead', False) else 'No'}\n"
+        #     f"Body: {h.handle(mail.get('body', {}).get('content', 'No Content'))}"
+        #     for mail in relevant_mails[:25]
+        # ])
+
+        preprocessed_mail_details = preprocess_mail_details(relevant_mails)
 
         with st.spinner("Thinking..."):
             # Use the OpenAI API to respond based on the emails
