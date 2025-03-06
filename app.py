@@ -16,6 +16,7 @@ start_date = st.sidebar.date_input("Select a Start Date", min_value=datetime(200
 
 # Limit the date range to 3 months (default today)
 three_months_from_start = start_date + timedelta(days=90)
+st.sidebar.write(f"From: {start_date}\nTo: {three_months_from_start}")
 
 if st.sidebar.button("Fetch Emails"):
     token = get_access_token()
