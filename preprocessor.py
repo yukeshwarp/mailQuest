@@ -37,7 +37,7 @@ def preprocess_mail_details(mails):
         f"Importance: {preprocess_text(mail.get('importance', 'Normal'))}\n"
         f"Read: {'Yes' if mail.get('isRead', False) else 'No'}\n"
         f"Body: {preprocess_text(h.handle(mail.get('body', {}).get('content', 'No Content')))}"
-        for mail in mails
+        for mail in mails[:30]
     ])
     
     return preprocessed_details
