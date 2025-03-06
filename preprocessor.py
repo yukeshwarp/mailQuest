@@ -12,7 +12,7 @@ def preprocess_text(text):
     text = text.lower()
 
     # Remove punctuation
-    text = re.sub(r'[^\w\s]', '', text)
+    #text = re.sub(r'[^\w\s]', '', text)
 
     # Tokenize text into words
     words = text.split()
