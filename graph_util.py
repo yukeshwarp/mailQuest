@@ -2,6 +2,7 @@ import msal
 import requests
 import logging as log
 from config import *
+from datetime import datetime, timedelta
 
 # Set up logging
 log.basicConfig(level=log.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -26,10 +27,18 @@ def get_access_token():
         log.exception("Exception occurred while acquiring access token.")
         return None
 
-def fetch_emails(access_token, user_email):
-    """Fetch all emails from Outlook with metadata."""
+
+def fetch_emails(access_token, user_email, start_date, end_date):
+    """Fetch emails within a date range."""
     batch_size = 500
-    url = f"https://graph.microsoft.com/v1.0/users/{user_email}/messages?$top={batch_size}"
+    
+    # Format the dates to the correct ISO 8601 format
+    start_date_str = start_date.isoformat()
+    end_date_str = end_date.isoformat()
+
+    # Construct the query URL with a filter for the date range
+    url = f"https://graph.microsoft.com/v1.0/users/{user_email}/messages?$top={batch_size}&$filter=receivedDateTime ge {start_date_str} and receivedDateTime le {end_date_str}"
+    
     headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
     
     all_mails = []
