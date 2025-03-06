@@ -2,7 +2,7 @@ import nltk
 from nltk.corpus import stopwords
 import re
 import string
-
+import html2text
 # Download the stopwords if not already downloaded
 nltk.download('stopwords')
 
