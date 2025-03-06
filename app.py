@@ -1,28 +1,25 @@
 import streamlit as st
-import requests
-import os
-from openai import AzureOpenAI
-import html2text
-import json
-import re
 from datetime import datetime, timedelta
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.preprocessing import Normalizer
-from sklearn.decomposition import NMF
 from graph_util import fetch_emails, get_access_token
 from relevance import get_relevant_mails
-from config import *
+import html2text
 
-mails = ""
 # Streamlit UI
 st.set_page_config(page_title="mailQuest", layout="wide")
 st.sidebar.title("Email Input")
 user_email = st.sidebar.text_input("Enter User Email")
 
+# Add a date picker for the user to select a start date
+start_date = st.sidebar.date_input("Select a Start Date", min_value=datetime(2000, 1, 1), max_value=datetime.today())
+
+# Limit the date range to 3 months (default today)
+three_months_from_start = start_date + timedelta(days=90)
+
 if st.sidebar.button("Fetch Emails"):
     token = get_access_token()
     if token and user_email:
-        mails = fetch_emails(token, user_email)
+        # Fetch emails from the selected start date, limiting to 3 months from that date
+        mails = fetch_emails(token, user_email, start_date, three_months_from_start)
         st.session_state["mails"] = mails
         st.sidebar.success(f"Fetched {len(mails)} emails")
     else:
@@ -53,7 +50,7 @@ if prompt := st.chat_input("Ask a question about your emails"):
         h = html2text.HTML2Text()
         h.ignore_links = True
 
-        mail_details = "\n".join([
+        mail_details = "\n".join([ 
             f"Subject: {mail.get('subject', 'No Subject')}\n"
             f"From: {mail.get('from', {}).get('emailAddress', {}).get('address', 'Unknown Sender')}\n"
             f"Received: {mail.get('receivedDateTime', 'Unknown Time')}\n"
@@ -63,11 +60,12 @@ if prompt := st.chat_input("Ask a question about your emails"):
             for mail in relevant_mails[:25]
         ])
 
-
         with st.spinner("Thinking..."):
+            # Use the OpenAI API to respond based on the emails
             response_stream = client.chat.completions.create(
                 model="gpt-4o",
-                messages=[{"role": "system", "content": "Answer the user's query based on the given emails."}, {"role": "user", "content": mail_details + f"\n\nUser's Query: {prompt}"}],
+                messages=[{"role": "system", "content": "Answer the user's query based on the given emails."}, 
+                          {"role": "user", "content": mail_details + f"\n\nUser's Query: {prompt}"}],
                 temperature=0.5,
                 stream=True,
             )
@@ -81,3 +79,4 @@ if prompt := st.chat_input("Ask a question about your emails"):
                     response_placeholder.markdown(bot_response)
 
         st.session_state["messages"].append({"role": "assistant", "content": bot_response})
+
