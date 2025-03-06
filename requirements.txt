@@ -5,3 +5,4 @@ html2text
 scikit-learn
 azure-identity
 msal
+nltk
