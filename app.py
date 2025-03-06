@@ -3,6 +3,7 @@ from config import *
 from datetime import datetime, timedelta
 from graph_util import fetch_emails, get_access_token
 from relevance import get_relevant_mails
+from preprocessor import *
 import html2text
 
 # Streamlit UI
@@ -60,13 +61,14 @@ if prompt := st.chat_input("Ask a question about your emails"):
             f"Body: {h.handle(mail.get('body', {}).get('content', 'No Content'))}"
             for mail in relevant_mails[:25]
         ])
+        preprocessed_mail_details = preprocess_mail_details(mail_details)
 
         with st.spinner("Thinking..."):
             # Use the OpenAI API to respond based on the emails
             response_stream = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "system", "content": "Answer the user's query based on the given emails."}, 
-                          {"role": "user", "content": mail_details + f"\n\nUser's Query: {prompt}"}],
+                          {"role": "user", "content": preprocessed_mail_details + f"\n\nUser's Query: {prompt}"}],
                 temperature=0.5,
                 stream=True,
             )
