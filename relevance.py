@@ -3,7 +3,7 @@ import random
 import concurrent.futures
 from config import *
 
-def get_relevant_mails(mails, query):
+def get_relevant_mails(mails, query, start_date, three_months_from_start):
     relevant_mail_ids = []
 
     # Function to process a batch of mails
@@ -27,6 +27,7 @@ def get_relevant_mails(mails, query):
             mail_details += mail_detail + "\n\n"
         
         prompt = f"""You are given with details of multiple mails and a user query. If any mail is relevant to respond to the user query, return "yes" for that mail's position in the batch (1 to 10), otherwise "no".
+                    User's focus time period:- From:{start_date} To:{three_months_from_start}
                     Mails details: {mail_details}
                     
                     User query: {query}
