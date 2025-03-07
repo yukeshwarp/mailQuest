@@ -51,7 +51,7 @@ if prompt := st.chat_input("Ask a question about your emails"):
 
     mails = st.session_state.get("mails", [])
     if mails:
-        relevant_email_ids = get_relevant_mails(mails, prompt)
+        relevant_email_ids = get_relevant_mails(mails, prompt, start_date, three_months_from_start)
         relevant_mails = [mail for mail in mails if mail.get("id") in relevant_email_ids]
 
         if not relevant_mails:
@@ -77,7 +77,7 @@ if prompt := st.chat_input("Ask a question about your emails"):
             response_stream = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "system", "content": "Answer the user's query based on the given emails."}, 
-                          {"role": "user", "content": preprocessed_mail_details + f"\n\nUser's Query: {prompt}"}],
+                          {"role": "user", "content": f"User's focus time period:- From:{start_date} To:{three_months_from_start} \n\nMails:\n{preprocessed_mail_details}\n\nUser's Query: {prompt}"}],
                 temperature=0.5,
                 stream=True,
             )
