@@ -1,7 +1,46 @@
 import time
 import random
+import threading
 import concurrent.futures
 from config import *
+
+class LeakyBucket:
+    def __init__(self, capacity, leak_rate):
+        """
+        Initialize the Leaky Bucket.
+        :param capacity: Maximum number of requests the bucket can hold.
+        :param leak_rate: How often the bucket leaks (in seconds).
+        """
+        self.capacity = capacity  # max number of requests in the bucket
+        self.leak_rate = leak_rate  # the rate at which the bucket leaks
+        self.tokens = 0  # current number of tokens in the bucket
+        self.lock = threading.Lock()  # to ensure thread-safety
+        self.last_leak_time = time.time()  # last time the bucket leaked
+
+    def _leak(self):
+        """Leak tokens at the specified rate."""
+        current_time = time.time()
+        time_elapsed = current_time - self.last_leak_time
+        if time_elapsed >= self.leak_rate:
+            leak_tokens = int(time_elapsed // self.leak_rate)
+            self.tokens = max(0, self.tokens - leak_tokens)  # remove leaked tokens
+            self.last_leak_time = current_time - (time_elapsed % self.leak_rate)
+
+    def request(self):
+        """Request a token from the bucket."""
+        with self.lock:
+            self._leak()  # update tokens by leaking
+            if self.tokens < self.capacity:
+                self.tokens += 1  # add a token to the bucket
+                return True
+            else:
+                return False  # no token available, bucket is full
+
+    def wait_for_token(self):
+        """Wait until there is a token available."""
+        while not self.request():
+            time.sleep(self.leak_rate)  # wait for the next token to become available
+
 
 def get_relevant_mails(mails, query, start_date, three_months_from_start):
     relevant_mail_ids = []
@@ -71,13 +110,20 @@ def get_relevant_mails(mails, query, start_date, three_months_from_start):
     # Batch the mails into groups of 10
     batches = [mails[i:i + 10] for i in range(0, len(mails), 10)]
 
+    # Initialize LeakyBucket for controlling the rate
+    bucket = LeakyBucket(capacity=10, leak_rate=1)  # Capacity of 10, leaking every 1 second
+
     # Use ThreadPoolExecutor to process the batches concurrently
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # Map the batches to the process_batch function concurrently
-        results = executor.map(process_batch, batches)
+        results = []
+        for batch in batches:
+            bucket.wait_for_token()  # Wait for the token before sending the request
+            result = executor.submit(process_batch, batch)
+            results.append(result)
 
-    # Collect relevant mail IDs from all batches
-    for batch_result in results:
-        relevant_mail_ids.extend(batch_result)
+        # Collect relevant mail IDs from all batches
+        for future in concurrent.futures.as_completed(results):
+            relevant_mail_ids.extend(future.result())
 
     return relevant_mail_ids
