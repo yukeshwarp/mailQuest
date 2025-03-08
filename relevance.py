@@ -3,6 +3,7 @@ import random
 import threading
 import concurrent.futures
 from config import *
+import openai
 
 class LeakyBucket:
     def __init__(self, capacity, leak_rate):
