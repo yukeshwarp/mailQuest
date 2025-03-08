@@ -95,7 +95,7 @@ def get_relevant_mails(mails, query, start_date, three_months_from_start):
                 # Extract the relevant mail IDs based on the positions
                 return [batch[pos].get("id") for pos in relevant_positions]
             
-            except openai.error.RateLimitError:  # Handle rate-limiting error specifically
+            except openai.RateLimitError:  # Handle rate-limiting error specifically
                 retries += 1
                 backoff_time = (2 ** retries) + random.uniform(0, 1)  # Exponential backoff with jitter
                 print(f"Rate limit hit, retrying in {backoff_time:.2f} seconds...")
